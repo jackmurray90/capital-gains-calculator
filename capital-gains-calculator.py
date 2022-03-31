@@ -49,13 +49,17 @@ for (timestamp, side, btc, aud) in rows:
       buying_rate = buys[0]['aud'] / buys[0]['btc']
       selling_rate = aud / btc
       if buys[0]['btc'] < btc:
+        amount = buys[0]['btc']
         profit = (selling_rate - buying_rate) * buys[0]['btc']
         btc -= buys[0]['btc']
         aud -= selling_rate * buys[0]['btc']
+        buying_timestamp = buys[0]['timestamp']
         buys = buys[1:]
       else:
+        amount = btc
         fraction = btc / buys[0]['btc']
         profit = (selling_rate - buying_rate) * btc
+        buying_timestamp = buys[0]['timestamp']
         buys[0] = {'timestamp': buys[0]['timestamp'], 'btc': buys[0]['btc'] - btc, 'aud': buys[0]['aud'] * (1 - fraction)}
         btc = 0
         aud = 0
@@ -64,7 +68,7 @@ for (timestamp, side, btc, aud) in rows:
       else:
         tax_year = timestamp.year
       discount = buys[0]['timestamp'].replace(year=buys[0]['timestamp'].year+1) < timestamp
-      print("Made", '$'+str(profit)[:9], "on", timestamp, "buying at", int(buying_rate), "selling at", int(selling_rate), "50% discount" if discount else "no discount")
+      print("Made", '$'+str(profit)[:9], "with", "%0.8f"%amount, "buying at", int(buying_rate),"on",buying_timestamp,"selling at", int(selling_rate), "on", timestamp, "50% discount" if discount else "no discount")
       all_total_profit += profit
       total_profit[tax_year] += profit
       if discount:
