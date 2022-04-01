@@ -14,6 +14,13 @@ rows = []
 with open('trades.csv', newline='') as csvfile:
   reader = csv.DictReader(csvfile)
   for row in reader:
+
+    # hack to help with efbbbf bytes at start of binance CSV export
+    for key, value in row.items():
+      if key.endswith('Date(UTC)'):
+        date = value
+    row['Date(UTC)'] = date
+
     if row['Pair'] == base + quote:
       timestamp = datetime.fromisoformat(row['Date(UTC)'])
       btc = float(row['Executed'][:-3])

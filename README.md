@@ -5,9 +5,12 @@ Script that takes Binance trades CSV and calculates capital gains for a year.
 ## Usage
 
 Put your binance trades from the long-term (>6 month) export feature on binance
-into a CSV called "trades.csv". Then run:
+into a CSV called "trades.csv", including headers. Then run:
 
     ./capital-gains-calculator.py
+
+To get more than 1 year worth of trades, stitch together multiple CSV exports.
+The order of trades doesn't matter.
 
 ## How it works
 
