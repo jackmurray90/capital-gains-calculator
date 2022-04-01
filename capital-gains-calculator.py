@@ -84,8 +84,8 @@ for (timestamp, side, btc, aud) in rows:
 
 print()
 for year in total_profit.keys():
-  print("Total Gapital Gains for",year,"is               ", total_profit[year])
-  print("Total Gapital Gains for",year,"with discounts is", total_discounted_profit[year])
+  print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"is               ", total_profit[year])
+  print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"with discounts is", total_discounted_profit[year])
 print()
 remaining_btc = sum([buy['btc'] for buy in buys])
 remaining_spent = sum([buy['aud'] for buy in buys])
