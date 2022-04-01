@@ -1,6 +1,8 @@
 # Binance Capital Gains Tax Calculator
 
 Script that takes Binance trades CSV and calculates capital gains for a year.
+If anybody uses this I would appreciate an email to jack@murray.software so I
+can collect stats about usage. For new feature requests please create an issue.
 
 ## Usage
 
