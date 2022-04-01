@@ -33,4 +33,5 @@ Australia.
 
 Setting base or quote will change the market.
 
-The `current_rate` is used to calculate your current profit at the end.
+The `current_rate` is used to calculate your current theoretical profit at the
+end.
