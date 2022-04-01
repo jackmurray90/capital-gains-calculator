@@ -10,7 +10,7 @@ into a CSV called "trades.csv", including headers. Then run:
     ./capital-gains-calculator.py
 
 To get more than 1 year worth of trades, stitch together multiple CSV exports.
-The order of trades doesn't matter.
+The order of trades doesn't matter, since they are provided with a timestamp.
 
 ## How it works
 
