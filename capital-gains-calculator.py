@@ -3,6 +3,7 @@
 australian_tax_year = True
 base = 'BTC'
 quote = 'AUD'
+current_rate = 41029.39
 
 from csv import DictReader
 from datetime import datetime
@@ -103,3 +104,10 @@ print()
 for year in total_profit.keys():
   print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"is               ", total_profit[year])
   print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"with discounts is", total_discounted_profit[year])
+print()
+remaining_btc = sum([buy['btc'] for buy in buys])
+remaining_spent = sum([buy['aud'] for buy in buys])
+print("Total remaining btc is", remaining_btc, "( $", remaining_btc * current_rate, ", acquired for $", remaining_spent, ")")
+print()
+print("Total all-time profit if you sold everything now:", remaining_btc * current_rate - remaining_spent + all_total_profit)
+print()
