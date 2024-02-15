@@ -69,23 +69,22 @@ for (timestamp, side, btc, aud) in rows:
   else:
     while btc > 0:
       if len(buys) == 0:
-        print(btc, "BTC produced out of thin air, claiming it was free at", rows[0][0])
-        buys = [{'timestamp': rows[0][0], 'btc': btc, 'aud': 0}]
+        rate = rows[0][3] / rows[0][2]
+        print(btc, "BTC produced out of thin air, claiming it was", rate, "at", rows[0][0])
+        buys = [{'timestamp': rows[0][0], 'btc': btc, 'aud': btc * rate}]
       buying_rate = buys[0]['aud'] / buys[0]['btc']
       selling_rate = aud / btc
       if buys[0]['btc'] <= btc:
-        amount = buys[0]['btc']
-        profit = (selling_rate - buying_rate) * buys[0]['btc']
-        btc -= buys[0]['btc']
-        aud -= selling_rate * buys[0]['btc']
-        buying_timestamp = buys[0]['timestamp']
+        amount, buying_timestamp = buys[0]['btc'], buys[0]['timestamp']
+        profit = (selling_rate - buying_rate) * amount
+        btc -= amount
+        aud -= selling_rate * amount
         buys = buys[1:]
       else:
-        amount = btc
+        amount, buying_timestamp = btc, buys[0]['timestamp']
         fraction = btc / buys[0]['btc']
-        profit = (selling_rate - buying_rate) * btc
-        buying_timestamp = buys[0]['timestamp']
-        buys[0] = {'timestamp': buys[0]['timestamp'], 'btc': buys[0]['btc'] - btc, 'aud': buys[0]['aud'] * (1 - fraction)}
+        profit = (selling_rate - buying_rate) * amount
+        buys[0] = {'timestamp': buys[0]['timestamp'], 'btc': buys[0]['btc'] - amount, 'aud': buys[0]['aud'] * (1 - fraction)}
         btc = 0
         aud = 0
       if australian_tax_year:
