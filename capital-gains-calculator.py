@@ -3,7 +3,7 @@
 australian_tax_year = True
 base = 'BTC'
 quote = 'AUD'
-current_rate = 41029.39
+current_rate = 80152
 
 from csv import DictReader
 from datetime import datetime
@@ -68,9 +68,12 @@ for (timestamp, side, btc, aud) in rows:
     buys.append({'timestamp': timestamp, 'btc': btc, 'aud': aud})
   else:
     while btc > 0:
+      if len(buys) == 0:
+        print(btc, "BTC produced out of thin air, claiming it was free at", rows[0][0])
+        buys = [{'timestamp': rows[0][0], 'btc': btc, 'aud': 0}]
       buying_rate = buys[0]['aud'] / buys[0]['btc']
       selling_rate = aud / btc
-      if buys[0]['btc'] < btc:
+      if buys[0]['btc'] <= btc:
         amount = buys[0]['btc']
         profit = (selling_rate - buying_rate) * buys[0]['btc']
         btc -= buys[0]['btc']
@@ -89,10 +92,7 @@ for (timestamp, side, btc, aud) in rows:
         tax_year = timestamp.year-1 if timestamp.month <= 6 else timestamp.year
       else:
         tax_year = timestamp.year
-      if len(buys) == 0:
-        print(amount, "BTC produced out of thin air, claiming it was free at", rows[0][0])
-        buys = [{'timestamp': rows[0][0], 'btc': amount, 'aud': 0}]
-      discount = buys[0]['timestamp'].replace(year=buys[0]['timestamp'].year+1) < timestamp
+      discount = buying_timestamp.replace(year=buying_timestamp.year+1) < timestamp
       print("Made", '$'+str(profit)[:9], "with", "%0.8f"%amount, "buying at", int(buying_rate),"on",buying_timestamp,"selling at", int(selling_rate), "on", timestamp, "50% discount" if discount else "no discount")
       all_total_profit += profit
       total_profit[tax_year] += profit
