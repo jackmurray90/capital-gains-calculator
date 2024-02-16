@@ -4,6 +4,7 @@ australian_tax_year = True
 base = 'BTC'
 quote = 'AUD'
 current_rate = 80152
+tx_fees = 0.00984872
 
 from csv import DictReader
 from datetime import datetime
@@ -16,13 +17,14 @@ rows = []
 
 for f in Path('.').iterdir():
   if f.suffix == '.csv':
+    print("Loading", f)
     with f.open(newline='') as csvfile:
       reader = DictReader(csvfile)
       for row in reader:
         # hack to help with efbbbf bytes at start of binance CSV export
         date = None
         for key, value in row.items():
-          if key.endswith('Date(UTC)'):
+          if 'Date(UTC)' in key:
             date = value
         if date:
           row['Date(UTC)'] = date
@@ -69,9 +71,8 @@ for (timestamp, side, btc, aud) in rows:
   else:
     while btc > 0:
       if len(buys) == 0:
-        rate = rows[0][3] / rows[0][2]
-        print(btc, "BTC produced out of thin air, claiming it was", rate, "at", rows[0][0])
-        buys = [{'timestamp': rows[0][0], 'btc': btc, 'aud': btc * rate}]
+        print(btc, "BTC produced out of thin air, claiming it was free at", timestamp)
+        buys = [{'timestamp': timestamp, 'btc': btc, 'aud': 0}]
       buying_rate = buys[0]['aud'] / buys[0]['btc']
       selling_rate = aud / btc
       if buys[0]['btc'] <= btc:
@@ -104,7 +105,7 @@ for year in total_profit.keys():
   print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"is               ", total_profit[year])
   print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"with discounts is", total_discounted_profit[year])
 print()
-remaining_btc = sum([buy['btc'] for buy in buys])
+remaining_btc = sum([buy['btc'] for buy in buys]) - tx_fees
 remaining_spent = sum([buy['aud'] for buy in buys])
 print("Total remaining btc is", remaining_btc, "( $", remaining_btc * current_rate, ", acquired for $", remaining_spent, ")")
 print()
