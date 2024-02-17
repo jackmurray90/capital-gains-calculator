@@ -13,6 +13,7 @@ from pathlib import Path
 coinspot_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)"}
 adjustment_keys = {"Date","Type","BTC","AUD","Comment"}
 coinspot_sends_receives_keys = {"Transaction Date","Type","Coin","Status","Fee","Amount","Address","Txid","Aud"}
+transactions_keys = {"Timestamp","Date","Time","Type","Transaction ID","Fee","Fee unit","Address","Label","Amount","Amount unit","Fiat (AUD)","Other"}
 
 rows = []
 tx_fees = 0
@@ -21,7 +22,10 @@ for f in Path('.').iterdir():
   if f.suffix == '.csv':
     print("Loading", f)
     with f.open(newline='') as csvfile:
-      reader = DictReader(csvfile)
+      if f.stem == 'transactions':
+        reader = DictReader(csvfile, delimiter=';')
+      else:
+        reader = DictReader(csvfile)
       for row in reader:
         # hack to help with efbbbf bytes at start of binance CSV export
         date = None
@@ -30,7 +34,16 @@ for f in Path('.').iterdir():
             date = value
         if date:
           row['Date(UTC)'] = date
-        if row.keys() == coinspot_sends_receives_keys:
+        if row.keys() == transactions_keys:
+          if row["Type"] == "SENT" and row["Amount unit"] == "BTC":
+            assert row["Fee unit"] == "BTC"
+            timestamp = datetime.strptime(f"{row['Date']} {row['Time']}00", "%d/%m/%Y %H:%M:%S GMT%z").replace(tzinfo=None)
+            rate = float(row["Fiat (AUD)"].replace(",","")) / float(row["Amount"].replace(",", ""))
+            btc = float(row["Fee"].replace(",", ""))
+            aud = btc * rate
+            rows.append((timestamp, "sell", btc, aud, 'transaction-fee'))
+            tx_fees += btc
+        elif row.keys() == coinspot_sends_receives_keys:
           if row["Type"] == "Send":
             timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
             btc = abs(float(row["Fee"]))
@@ -114,7 +127,7 @@ for (timestamp, side, btc, aud, _) in rows:
         buys[-1] = {'timestamp': buys[-1]['timestamp'], 'btc': buys[-1]['btc'] * (1 - fraction), 'aud': buys[-1]['aud'] * (1 - fraction)}
         btc = 0
   else:
-    while btc > 0:
+    while btc >= 0.00000001:
       if len(buys) == 0:
         print(btc, "BTC produced out of thin air, claiming it was free at", timestamp)
         buys = [{'timestamp': timestamp, 'btc': btc, 'aud': 0}]
