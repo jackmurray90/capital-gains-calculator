@@ -11,7 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 
 coinspot_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)"}
-adjustment_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)", "Comment"}
+adjustment_keys = {"Date","Type","BTC","AUD","Comment"}
 coinspot_sends_receives_keys = {"Transaction Date","Type","Coin","Status","Fee","Amount","Address","Txid","Aud"}
 
 rows = []
@@ -37,7 +37,15 @@ for f in Path('.').iterdir():
             aud = abs(float(row["Aud"]) / float(row["Amount"]) * btc)
             rows.append((timestamp, "sell", btc, aud, 'coinspot'))
             tx_fees += btc
-        elif row.keys() == coinspot_keys or row.keys() == adjustment_keys:
+        elif row.keys() == adjustment_keys:
+          timestamp = datetime.strptime(row["Date"], "%d/%m/%Y")
+          btc = float(row['BTC'])
+          aud = float(row['AUD'])
+          if row['Type'] == 'Buy':
+            rows.append((timestamp, 'buy', btc, aud, 'adjustment'))
+          else:
+            rows.append((timestamp, 'sell', btc, aud, 'adjustment'))
+        elif row.keys() == coinspot_keys:
           if row['Market'] == base + '/' + quote:
             timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
             btc = float(row['Amount'])
