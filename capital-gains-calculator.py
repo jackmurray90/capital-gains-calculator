@@ -12,8 +12,10 @@ from pathlib import Path
 
 coinspot_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)"}
 adjustment_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)", "Comment"}
+coinspot_sends_receives_keys = {"Transaction Date","Type","Coin","Status","Fee","Amount","Address","Txid","Aud"}
 
 rows = []
+tx_fees = 0
 
 for f in Path('.').iterdir():
   if f.suffix == '.csv':
@@ -28,7 +30,14 @@ for f in Path('.').iterdir():
             date = value
         if date:
           row['Date(UTC)'] = date
-        if row.keys() == coinspot_keys or row.keys() == adjustment_keys:
+        if row.keys() == coinspot_sends_receives_keys:
+          if row["Type"] == "Send":
+            timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
+            btc = abs(float(row["Fee"]))
+            aud = abs(float(row["Aud"]) / float(row["Amount"]) * btc)
+            rows.append((timestamp, "sell", btc, aud, 'coinspot'))
+            tx_fees += btc
+        elif row.keys() == coinspot_keys or row.keys() == adjustment_keys:
           if row['Market'] == base + '/' + quote:
             timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
             btc = float(row['Amount'])
@@ -64,13 +73,8 @@ for row in rows:
   if row[1] == 'buy':
     unique_buying_days[f"{row[0].day}/{row[0].month}/{row[0].year}"] = row
 
-tx_fees = 0
-
 for timestamp, side, btc, aud, exchange in unique_buying_days.values():
-  if exchange == 'coinspot':
-    rows.append((timestamp, 'sell', 0.0005, aud/btc*0.0005, 'coinspot'))
-    tx_fees += 0.0005
-  else:
+  if exchange == 'binance':
     rows.append((timestamp, 'sell', 0.0001, aud/btc*0.0001, 'binance'))
     tx_fees += 0.0001
 
@@ -126,7 +130,7 @@ for year in total_profit.keys():
   print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"is               ", total_profit[year])
   print("Total Gapital Gains for year starting","Jul" if australian_tax_year else "Jan",year,"with discounts is", total_discounted_profit[year])
 print()
-remaining_btc = sum([buy['btc'] for buy in buys]) - tx_fees
+remaining_btc = sum([buy['btc'] for buy in buys])
 remaining_spent = sum([buy['aud'] for buy in buys])
 print("Total remaining btc is", remaining_btc, "( $", remaining_btc * current_rate, ", acquired for $", remaining_spent, ")")
 print()
