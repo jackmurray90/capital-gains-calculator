@@ -4,7 +4,6 @@ australian_tax_year = True
 base = 'BTC'
 quote = 'AUD'
 current_rate = 80152
-tx_fees = 0.00984872
 
 from csv import DictReader
 from datetime import datetime
@@ -12,6 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 
 coinspot_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)"}
+adjustment_keys = {"Transaction Date", "Type", "Market", "Amount", "Rate inc. fee", "Rate ex. fee", "Fee", "Fee AUD (inc GST)", "GST AUD", "Total AUD", "Total (inc GST)", "Comment"}
 
 rows = []
 
@@ -28,15 +28,15 @@ for f in Path('.').iterdir():
             date = value
         if date:
           row['Date(UTC)'] = date
-        if row.keys() == coinspot_keys:
+        if row.keys() == coinspot_keys or row.keys() == adjustment_keys:
           if row['Market'] == base + '/' + quote:
             timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
             btc = float(row['Amount'])
             aud = float(row['Total AUD'])
             if row['Type'] == 'Buy':
-              rows.append((timestamp, 'buy', btc, aud))
+              rows.append((timestamp, 'buy', btc, aud, 'coinspot'))
             else:
-              rows.append((timestamp, 'sell', btc, aud))
+              rows.append((timestamp, 'sell', btc, aud, 'coinspot'))
         else:
           if row['Pair'] == base + quote:
             timestamp = datetime.fromisoformat(row['Date(UTC)'])
@@ -49,13 +49,30 @@ for f in Path('.').iterdir():
                 btc -= fee
               else:
                 btc -= fee * (btc/aud)
-              rows.append((timestamp, 'buy', btc, aud))
+              rows.append((timestamp, 'buy', btc, aud, 'binance'))
             else:
               if feecoin == quote:
                 aud -= fee
               else:
                 aud -= fee * (aud/btc)
-              rows.append((timestamp, 'sell', btc, aud))
+              rows.append((timestamp, 'sell', btc, aud, 'binance'))
+
+# btc, aud, exchange
+unique_buying_days = {}
+
+for row in rows:
+  if row[1] == 'buy':
+    unique_buying_days[f"{row[0].day}/{row[0].month}/{row[0].year}"] = row
+
+tx_fees = 0
+
+for timestamp, side, btc, aud, exchange in unique_buying_days.values():
+  if exchange == 'coinspot':
+    rows.append((timestamp, 'sell', 0.0005, aud/btc*0.0005, 'coinspot'))
+    tx_fees += 0.0005
+  else:
+    rows.append((timestamp, 'sell', 0.0001, aud/btc*0.0001, 'binance'))
+    tx_fees += 0.0001
 
 rows.sort()
 
@@ -65,7 +82,7 @@ all_total_profit = 0
 total_profit = defaultdict(lambda: 0)
 total_discounted_profit = defaultdict(lambda: 0)
 
-for (timestamp, side, btc, aud) in rows:
+for (timestamp, side, btc, aud, _) in rows:
   if side == 'buy':
     buys.append({'timestamp': timestamp, 'btc': btc, 'aud': aud})
   else:
@@ -99,6 +116,10 @@ for (timestamp, side, btc, aud) in rows:
       if discount:
         profit *= 0.5
       total_discounted_profit[tax_year] += profit
+
+print()
+
+print("Tx fees", tx_fees)
 
 print()
 for year in total_profit.keys():
