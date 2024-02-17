@@ -5,8 +5,14 @@ for each year.
 
 ## Usage
 
-Put your binance trades from the long-term (>6 month) export feature on binance
-into a CSV file in the same directory. Do the same with CoinSpot. Then run:
+Export the following as CSV and place them in the same directory:
+
+  - Binance trades
+  - coinspot trades
+  - coinspot send/receives
+  - trezor suite transactions
+
+Then add your purchases to adjustments.csv, and run:
 
     ./capital-gains-calculator.py
 
