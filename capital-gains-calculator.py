@@ -91,6 +91,8 @@ for timestamp, side, btc, aud, exchange in unique_buying_days.values():
 
 rows.sort()
 
+adjustments = []
+
 buys = []
 
 all_total_profit = 0
@@ -103,10 +105,12 @@ for (timestamp, side, btc, aud, _) in rows:
   elif side == 'transfer':
     while btc > 0:
       if buys[-1]['btc'] <= btc:
+        adjustments.append((buys[-1]['timestamp'], 'Buy', buys[-1]['btc'], buys[-1]['aud'], 'Buy on coinspot'))
         btc -= buys[-1]['btc']
         buys = buys[:-1]
       else:
         fraction = btc / buys[-1]['btc']
+        adjustments.append((buys[-1]['timestamp'], 'Buy', btc, buys[-1]['aud'] * fraction, 'Buy on coinspot'))
         buys[-1] = {'timestamp': buys[-1]['timestamp'], 'btc': buys[-1]['btc'] * (1 - fraction), 'aud': buys[-1]['aud'] * (1 - fraction)}
         btc = 0
   else:
@@ -140,6 +144,14 @@ for (timestamp, side, btc, aud, _) in rows:
       if discount:
         profit *= 0.5
       total_discounted_profit[tax_year] += profit
+
+if adjustments:
+  print()
+  print("Adjustments for superannuation:")
+  print()
+  print("Date,Type,BTC,AUD,Comment")
+  for timestamp, type, btc, aud, comment in adjustments:
+    print(f"{timestamp.day}/{timestamp.month}/{timestamp.year},{type},{btc},{aud},{comment}")
 
 print()
 
