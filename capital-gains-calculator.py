@@ -47,7 +47,7 @@ for f in Path('.').iterdir():
             aud = float(row['AUD'])
             rows.append((timestamp, 'sell', btc, aud, 'adjustment'))
           else:
-            rows.append((timestamp + timedelta(days=1), 'transfer', btc, aud, 'adjustment'))
+            rows.append((timestamp + timedelta(days=1), 'super', btc, aud, 'adjustment'))
         elif row.keys() == coinspot_keys:
           if row['Market'] == base + '/' + quote:
             timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
@@ -102,7 +102,7 @@ total_discounted_profit = defaultdict(lambda: 0)
 for (timestamp, side, btc, aud, _) in rows:
   if side == 'buy':
     buys.append({'timestamp': timestamp, 'btc': btc, 'aud': aud})
-  elif side == 'transfer':
+  elif side == 'super':
     while btc > 0:
       if buys[-1]['btc'] <= btc:
         adjustments.append((buys[-1]['timestamp'], 'Buy', buys[-1]['btc'], buys[-1]['aud'], 'Buy on coinspot'))
