@@ -6,7 +6,7 @@ quote = 'AUD'
 current_rate = 80152
 
 from csv import DictReader
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 from pathlib import Path
 
@@ -40,11 +40,14 @@ for f in Path('.').iterdir():
         elif row.keys() == adjustment_keys:
           timestamp = datetime.strptime(row["Date"], "%d/%m/%Y")
           btc = float(row['BTC'])
-          aud = float(row['AUD'])
           if row['Type'] == 'Buy':
+            aud = float(row['AUD'])
             rows.append((timestamp, 'buy', btc, aud, 'adjustment'))
-          else:
+          elif row['Type'] == 'Sell':
+            aud = float(row['AUD'])
             rows.append((timestamp, 'sell', btc, aud, 'adjustment'))
+          else:
+            rows.append((timestamp + timedelta(days=1), 'transfer', btc, aud, 'adjustment'))
         elif row.keys() == coinspot_keys:
           if row['Market'] == base + '/' + quote:
             timestamp = datetime.strptime(row['Transaction Date'], "%d/%m/%Y %H:%M %p")
@@ -97,6 +100,15 @@ total_discounted_profit = defaultdict(lambda: 0)
 for (timestamp, side, btc, aud, _) in rows:
   if side == 'buy':
     buys.append({'timestamp': timestamp, 'btc': btc, 'aud': aud})
+  elif side == 'transfer':
+    while btc > 0:
+      if buys[-1]['btc'] <= btc:
+        btc -= buys[-1]['btc']
+        buys = buys[:-1]
+      else:
+        fraction = btc / buys[-1]['btc']
+        buys[-1] = {'timestamp': buys[-1]['timestamp'], 'btc': buys[-1]['btc'] * (1 - fraction), 'aud': buys[-1]['aud'] * (1 - fraction)}
+        btc = 0
   else:
     while btc > 0:
       if len(buys) == 0:
