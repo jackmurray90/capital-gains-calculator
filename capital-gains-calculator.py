@@ -150,7 +150,7 @@ for (timestamp, side, btc, aud, _) in rows:
         tax_year = timestamp.year-1 if timestamp.month <= 6 else timestamp.year
       else:
         tax_year = timestamp.year
-      discount = buying_timestamp.replace(year=buying_timestamp.year+1) < timestamp
+      discount = (profit >= 0 and buying_timestamp.replace(year=buying_timestamp.year+1) < timestamp)
       print("Made", '$'+str(profit)[:9], "with", "%0.8f"%amount, "buying at", int(buying_rate),"on",buying_timestamp,"selling at", int(selling_rate), "on", timestamp, "50% discount" if discount else "no discount")
       all_total_profit += profit
       total_profit[tax_year] += profit
