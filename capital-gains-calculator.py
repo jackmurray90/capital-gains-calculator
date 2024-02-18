@@ -181,3 +181,6 @@ print("Total remaining btc is", remaining_btc, "( $", remaining_btc * current_ra
 print()
 print("Total all-time profit if you sold everything now:", remaining_btc * current_rate - remaining_spent + all_total_profit)
 print()
+if buys:
+  print("Next discount date", buys[0]['timestamp'].replace(year=buys[0]['timestamp'].year+1))
+  print()
