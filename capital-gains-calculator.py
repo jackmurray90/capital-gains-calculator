@@ -4,6 +4,7 @@ australian_tax_year = True
 base = 'BTC'
 quote = 'AUD'
 current_rate = 80152
+super_monthly_payment = 1100
 
 from csv import DictReader
 from datetime import datetime, timedelta
@@ -164,11 +165,11 @@ if adjustments:
   print()
   print("Date,Type,BTC,AUD,Comment")
   for timestamp, type, btc, aud, comment in adjustments:
-    print(f"{timestamp.day}/{timestamp.month}/{timestamp.year},{type},{btc},{aud},{comment}")
+    print(f"{timestamp.day}/{timestamp.month}/{timestamp.year},{type},{round(btc, 8)},{aud},{comment}")
 
 print()
 
-print("Tx fees", tx_fees)
+print("Tx fees", round(tx_fees, 8))
 
 print()
 for year in total_profit.keys():
@@ -177,10 +178,25 @@ for year in total_profit.keys():
 print()
 remaining_btc = sum([buy['btc'] for buy in buys])
 remaining_spent = sum([buy['aud'] for buy in buys])
-print("Total remaining btc is", remaining_btc, "( $", remaining_btc * current_rate, ", acquired for $", remaining_spent, ")")
+print("Total remaining btc is", round(remaining_btc, 8), "( $", remaining_btc * current_rate, ", acquired for $", remaining_spent, ")")
 print()
 print("Total all-time profit if you sold everything now:", remaining_btc * current_rate - remaining_spent + all_total_profit)
 print()
 if buys:
   print("Next discount date", buys[0]['timestamp'].replace(year=buys[0]['timestamp'].year+1))
   print()
+
+print("Next super monthly payment would look like this in adjustments.csv:")
+print()
+total_super_btc = 0
+while super_monthly_payment > 0:
+  if buys[-1]['aud'] >= super_monthly_payment:
+    fraction = super_monthly_payment / buys[-1]['aud']
+    total_super_btc += buys[-1]['btc']*fraction
+    break
+  else:
+    total_super_btc -= buys[-1]['btc']
+    super_monthly_payment -= buys[-1]['aud']
+    buys = buys[:-1]
+print(f"{datetime.now().strftime('%d/%m/%Y')},Super,{round(total_super_btc, 8)},,Transfer to superannuation")
+print()
