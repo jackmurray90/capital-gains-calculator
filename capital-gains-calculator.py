@@ -36,7 +36,7 @@ for f in Path('.').iterdir():
         if date:
           row['Date(UTC)'] = date
         if row.keys() == transactions_keys:
-          if row["Type"] == "SENT" and row["Amount unit"] == "BTC":
+          if (row["Type"] == "SELF" or row["Type"] == "SENT") and row["Amount unit"] == "BTC":
             assert row["Fee unit"] == "BTC"
             timestamp = datetime.strptime(f"{row['Date']} {row['Time']}00", "%d/%m/%Y %H:%M:%S GMT%z").replace(tzinfo=None)
             rate = float(row["Fiat (AUD)"].replace(",","")) / float(row["Amount"].replace(",", ""))
