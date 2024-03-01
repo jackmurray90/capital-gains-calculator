@@ -48,7 +48,7 @@ class Trezor:
                         TaxableEvent(
                             timestamp=timestamp,
                             asset="BTC",
-                            type=Type.sell,
+                            type=Type.transfer,
                             asset_amount=btc,
                             aud_amount=aud,
                         )

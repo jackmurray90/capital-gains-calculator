@@ -12,7 +12,7 @@ from adjustments import Adjustments
 from models import TaxableEvent, Type, SuperTransfer
 
 australian_tax_year = True
-current_rate = 80152
+current_rate = 95585
 super_monthly_payment = 1100
 
 exchanges = [
@@ -56,7 +56,7 @@ for asset in events:
         else:
             tax_year = event.timestamp.year
         if isinstance(event, SuperTransfer):
-            while event.asset_amount > 0:
+            while event.asset_amount >= 5e-9:
                 if buys[-1].asset_amount <= event.asset_amount:
                     adjustments.append(
                         (
@@ -92,11 +92,42 @@ for asset in events:
             all_total_profit -= event.aud_amount
             total_profit[tax_year] -= event.aud_amount
             total_discounted_profit[tax_year] -= event.aud_amount
+            while event.asset_amount >= 5e-9:
+                if len(buys) == 0:
+                    print(
+                        event.asset_amount,
+                        asset,
+                        "produced out of thin air, claiming it was free at",
+                        event.timestamp,
+                    )
+                    buys = [
+                        TaxableEvent(
+                            timestamp=event.timestamp,
+                            asset=asset,
+                            type=Type.buy,
+                            asset_amount=event.asset_amount,
+                            aud_amount=0,
+                        )
+                    ]
+                if buys[0].asset_amount <= event.asset_amount:
+                    event.asset_amount -= buys[0].asset_amount
+                    buys = buys[1:]
+                else:
+                    fraction = event.asset_amount / buys[0].asset_amount
+                    buys[0] = TaxableEvent(
+                        timestamp=buys[0].timestamp,
+                        asset=asset,
+                        type=Type.buy,
+                        asset_amount=buys[0].asset_amount - event.asset_amount,
+                        aud_amount=buys[0].aud_amount * (1 - fraction),
+                    )
+                    event.asset_amount = 0
+                    event.aud_amount = 0
         elif event.type == Type.buy:
             buys.append(event)
         else:
             selling_rate = event.aud_amount / event.asset_amount
-            while event.asset_amount > 0:
+            while event.asset_amount >= 5e-9:
                 if len(buys) == 0:
                     print(
                         event.asset_amount,
