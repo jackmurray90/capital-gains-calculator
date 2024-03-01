@@ -145,21 +145,22 @@ for asset in events:
                         )
                     ]
                 buying_rate = buys[0].aud_amount / buys[0].asset_amount
+                buying_timestamp = buys[0].timestamp
                 if buys[0].asset_amount <= event.asset_amount:
-                    amount, buying_timestamp = buys[0].asset_amount, buys[0].timestamp
-                    profit = (selling_rate - buying_rate) * amount
-                    event.asset_amount -= amount
-                    event.aud_amount -= selling_rate * amount
+                    amount = buys[0].asset_amount
+                    profit = (selling_rate - buying_rate) * buys[0].asset_amount
+                    event.asset_amount -= buys[0].asset_amount
+                    event.aud_amount -= selling_rate * buys[0].asset_amount
                     buys = buys[1:]
                 else:
-                    amount, buying_timestamp = event.asset_amount, buys[0].timestamp
+                    amount = event.asset_amount
                     fraction = event.asset_amount / buys[0].asset_amount
-                    profit = (selling_rate - buying_rate) * amount
+                    profit = (selling_rate - buying_rate) * event.asset_amount
                     buys[0] = TaxableEvent(
                         timestamp=buys[0].timestamp,
                         asset=asset,
                         type=Type.buy,
-                        asset_amount=buys[0].asset_amount - amount,
+                        asset_amount=buys[0].asset_amount - event.asset_amount,
                         aud_amount=buys[0].aud_amount * (1 - fraction),
                     )
                     event.asset_amount = 0
