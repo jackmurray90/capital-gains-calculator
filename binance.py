@@ -46,10 +46,6 @@ class Binance:
                 fee = Decimal(row["Fee"][:-3].replace(",", ""))
                 feecoin = row["Fee"][-3:]
                 if row["Side"] == "BUY":
-                    if feecoin == "BTC":
-                        btc -= fee
-                    else:
-                        btc -= fee * (btc / aud)
                     result.append(
                         TaxableEvent(
                             timestamp=timestamp,
@@ -62,8 +58,6 @@ class Binance:
                 else:
                     if feecoin == "AUD":
                         aud -= fee
-                    else:
-                        aud -= fee * (aud / btc)
                     result.append(
                         TaxableEvent(
                             timestamp=timestamp,
