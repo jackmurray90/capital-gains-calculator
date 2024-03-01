@@ -70,17 +70,15 @@ class Coinspot:
                             )
                         )
                 else:
-                    # Swap these two lines to remove backwards compatibility
                     result.append(
                         TaxableEvent(
                             timestamp=timestamp,
                             asset=base,
                             type=Type.sell,
                             asset_amount=base_amount,
-                            aud_amount=total_aud,
+                            aud_amount=total_aud - fee,
                         )
                     )
-                    # result.append(TaxableEvent(timestamp=timestamp, asset=base, type=Type.sell, asset_amount=base_amount, aud_amount=total_aud-fee))
                     if quote != "AUD":
                         result.append(
                             TaxableEvent(
@@ -115,7 +113,7 @@ class CoinspotSendsReceives:
                         TaxableEvent(
                             timestamp=timestamp,
                             asset=row["Coin"],
-                            type=Type.sell,
+                            type=Type.transfer,
                             asset_amount=btc,
                             aud_amount=aud,
                         )

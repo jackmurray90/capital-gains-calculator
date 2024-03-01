@@ -43,12 +43,18 @@ total_discounted_profit = defaultdict(lambda: 0)
 
 adjustments = []
 
-assert list(events.keys()) == ["BTC"]
-
 for asset in events:
     events[asset].sort(key=lambda x: x.timestamp)
     buys = []
     for event in events[asset]:
+        if australian_tax_year:
+            tax_year = (
+                event.timestamp.year - 1
+                if event.timestamp.month <= 6
+                else event.timestamp.year
+            )
+        else:
+            tax_year = event.timestamp.year
         if isinstance(event, SuperTransfer):
             while event.asset_amount > 0:
                 if buys[-1].asset_amount <= event.asset_amount:
@@ -82,6 +88,10 @@ for asset in events:
                         aud_amount=buys[-1].aud_amount * (1 - fraction),
                     )
                     event.asset_amount = 0
+        elif event.type == Type.transfer:
+            all_total_profit -= event.aud_amount
+            total_profit[tax_year] -= event.aud_amount
+            total_discounted_profit[tax_year] -= event.aud_amount
         elif event.type == Type.buy:
             buys.append(event)
         else:
@@ -123,14 +133,6 @@ for asset in events:
                     )
                     event.asset_amount = 0
                     event.aud_amount = 0
-                if australian_tax_year:
-                    tax_year = (
-                        event.timestamp.year - 1
-                        if event.timestamp.month <= 6
-                        else event.timestamp.year
-                    )
-                else:
-                    tax_year = event.timestamp.year
                 discount = (
                     profit >= 0
                     and buying_timestamp.replace(year=buying_timestamp.year + 1)

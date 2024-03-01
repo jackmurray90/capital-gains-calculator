@@ -7,6 +7,7 @@ from datetime import datetime
 class Type(str, Enum):
     buy = "buy"
     sell = "sell"
+    transfer = "transfer"
 
 
 class TaxableEvent(BaseModel):
